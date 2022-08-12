@@ -68,16 +68,13 @@ const draw = async () => {
         this.width = 40
         this.height = 40
         this.speed = 0.06 * 1
-        this.texture = randomNumber(0, 7)
+        this.texture = randomNumber(3, 3)
         this.color = `#${Math.floor(Math.random() * 16777215).toString(16)}`
-        this.diffusity = Math.floor((new Date() - timestamp) * 0.00001) + 1
+        this.diffusity = Math.floor((new Date() - timestamp) * 0.000001) + 1
       }
 
       update(input) {
         this.y += this.speed * this.diffusity
-        if (this.y >= 21) {
-          this.y = 21
-        }
         if (input.keys.indexOf("ArrowDown") > -1) {
           this.y >= 21 ? this.y : (this.y += this.speed * 2)
         }
@@ -95,7 +92,7 @@ const draw = async () => {
           const sX = x + 40 * this.x
           const sY = y + 40 * this.y
           ctx.fillRect(sX, sY, this.width, this.height)
-          return [sX, sY]
+          return { x: sX, y: sY }
         }
         this.qubesArray = []
         switch (this.texture) {
@@ -179,36 +176,63 @@ const draw = async () => {
     const input = new InputHandler()
     const boxes = []
     let currBox = []
-    let oldBox = []
-    // console.log((canvas.width - 2) / 40)
-    // console.log((canvas.height -5) / 40)
-    // playFieled()
+    let turrBox = []
+    let boxMap = []
     function bix() {
       return new Promise((resolve) => {
         const box = new Qubes()
         boxes.push(box)
         function qube() {
           ctx.clearRect(0, 0, canvas.width, canvas.height)
-          boxes.forEach((b, i) => {
-            currBox = b.draw()
-            if (boxes.length > 1) {
-              console.log(boxes[i].qubesArray)
-            }
+          playFieled()
+          boxes.forEach((b) => {
+            b.draw()
           })
-          // console.log(oldBox)
-          const curPos = box.update(input)
-          const check =
-            curPos.y >= 21 ||
-            boxes.some((b) =>
-              b.qubesArray.some((s) =>
-                s.some((q) => q[1] - 40 <= currBox[0][1])
-              )
-            )
+          currBox = boxes.map((bop) => {
+            return bop
+          })
+          currBox = currBox.reverse()[0].qubesArray.forEach((o, i) => {
+            turrBox[i] = o
+          })
+          const collision = (() => {
+            let map = []
+            if (boxMap.length > 0) {
+              boxMap.forEach((b) => {
+                b.qubesArray.forEach((box1) => {
+                  turrBox.forEach((box2) => {
+                    if (
+                      box1.y < box2.y + 40 &&
+                      box1.x < box2.x + 40 &&
+                      box1.x + 40 > box2.x &&
+                      box1.y + 40 > box2.y
+                    ) {
+                      map.push(1)
+                    }
+                    if (box2.y >= 22 * 40) {
+                      map.push(1)
+                    }
+                  })
+                })
+              })
+              return !map.some((tu) => tu == 1)
+            } else {
+              turrBox.forEach((box2) => {
+                if (box2.y >= 22 * 40) {
+                  map.push(1)
+                }
+              })
+              return !map.some((tu) => tu == 1)
+            }
+          })()
+          box.update(input)
 
-          if (!check) {
+          if (collision) {
             requestAnimationFrame(qube)
           } else {
-            resolve()
+            boxMap = boxes.map((bm) => {
+              return bm
+            })
+            resolve(boxMap)
           }
         }
         qube()
